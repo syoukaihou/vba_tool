@@ -1,0 +1,145 @@
+Private Sub cleanData_Click()
+
+    Application.DisplayAlerts = False
+    
+    Application.ScreenUpdating = False
+    
+    Dim folderPath As String
+    Dim currentFile As String
+    
+    Dim updateTime As Date
+    Dim tody As Date
+    
+    tody = "2018-12-03 00:00:00"
+    
+    Dim targetRow As Long
+    
+    folderPath = ThisWorkbook.Path & "\export_excel\"
+    currentFile = Dir(folderPath & "*.xls")
+    
+    Do While currentFile <> ""
+    
+        'open file
+        Set currentBook = Workbooks.Open(Filename:=folderPath & currentFile)
+        
+        Set firstSheet = currentBook.Sheets(1)
+        
+        Dim c As range
+        For Each c In firstSheet.range("G2:G25")
+        
+            updateTime = c.Value
+            If updateTime < tody Then
+            
+                targetRow = c.Row
+                firstSheet.Rows(targetRow).Delete
+
+            End If
+  
+        Next
+        currentBook.Close Savechanges:=True
+        
+        currentFile = Dir
+          
+    Loop
+    MsgBox ("success!")
+    
+End Sub
+
+Private Sub format_Click_Click()
+
+    '禁用所有事件
+    Application.DisplayAlerts = False
+    
+    '关闭屏幕更新，增加程序运行效率
+    Application.ScreenUpdating = False
+
+    '文件夹路径
+    Dim folderPath As String
+    
+    ' 当前读取的文件
+    Dim currentFile As String
+    
+    '记录文件个数
+    Dim count As Long
+    
+    folderPath = ThisWorkbook.Path & "\export_excel\"
+    
+    currentFile = Dir(folderPath & "*.xls")
+    
+    count = 1
+    
+    Do While currentFile <> ""
+        
+        '获取数据并记录
+        Call getData(folderPath & currentFile, count)
+
+        '指向下一个文件
+        currentFile = Dir
+        
+        count = count + 1
+
+    Loop
+    
+    MsgBox ("success!")
+    
+End Sub
+
+Public Function getData(currentFile As String, count As Long)
+
+    Dim sheetName As String
+    Dim time As String
+    Dim rowCount As Long
+    Dim currentCloum As Long
+    
+    currentCloum = count + 2
+
+    'open file
+    Set currentBook = Workbooks.Open(Filename:=currentFile, ReadOnly:=True)
+    
+    '获取第一个sheet
+    Set firstSheet = currentBook.Sheets(1)
+    
+    'get sheet name
+    sheetName = firstSheet.Name
+    
+    time = Mid(sheetName, 15, 4)
+    
+    
+    '获取工具book的第2个sheet
+    Set toolSheet = ThisWorkbook.Sheets(2)
+    
+    toolSheet.Cells("1", currentCloum) = Left(time, 2) & ":" & Right(time, 2)
+
+    '获取数据行数
+    rowCount = firstSheet.UsedRange.Rows.count
+    
+    Dim i As Long
+    i = 2
+    Dim deviceName As String
+    Dim power As String
+
+    Do While rowCount >= i
+    
+        deviceName = firstSheet.Cells(i, 1).Value
+        power = firstSheet.Cells(i, 9).Value
+        
+        Dim c As range
+        For Each c In toolSheet.range("A1:A15")
+        
+            If c.Value = deviceName Then
+            
+                toolSheet.Cells(c.Row, currentCloum) = power
+            
+                Exit For
+            
+            End If
+
+        Next
+        
+        i = i + 1
+
+    Loop
+
+    currentBook.Close
+
+End Function
